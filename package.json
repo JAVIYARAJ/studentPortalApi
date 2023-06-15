@@ -1,0 +1,19 @@
+{
+  "name": "rjcoding",
+  "version": "1.0.0",
+  "description": "android student io project",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app"
+  },
+  "author": "raj javiya",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "dotenv": "^16.1.4",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mysql2": "^3.3.5",
+    "nodemon": "^2.0.22"
+  }
+}
