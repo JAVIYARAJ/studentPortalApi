@@ -1,7 +1,7 @@
 const mysql=require("mysql2")
 
 const conn=mysql.createConnection({
-    database:'student_io',
+    database:'stdeunt_io',
     host: 'localhost',
     user: 'root',
     password: 'root',

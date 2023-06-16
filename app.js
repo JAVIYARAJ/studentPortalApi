@@ -8,7 +8,6 @@ const authRoute=require('./routes/auth-routes.js')
 app.use(express.json())
 
 app.use('/student/auth',authRoute)
-app.use('/student/auth',authRoute)
 
 app.listen(process.env.port,()=>{
     console.log("server is running")
