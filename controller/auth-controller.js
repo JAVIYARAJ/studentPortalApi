@@ -17,7 +17,7 @@ class AuthController {
                 if (isMatch) {
                     const token = await jwt.sign({ uid }, process.env.JWT_SECRET, { "expiresIn": "5d" })
 
-                    res.status(200).json({ status: "success", message: "Login successfully", token: token });
+                    res.status(200).json({ status: "success", message: "Login successfully", token: token,role:loggedInUser.role });
 
                 } else {
                     res.status(400).json({ status: "failed", message: "email or password is not valid" })
