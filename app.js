@@ -10,6 +10,6 @@ app.use(express.json())
 app.use('/auth',authRoute)
 app.use('/student',studentRoute)
 
-app.listen(process.env.port,()=>{
+app.listen(process.env.PORT,()=>{
     console.log("server is running")
 })
