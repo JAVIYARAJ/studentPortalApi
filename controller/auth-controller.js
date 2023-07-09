@@ -2,6 +2,8 @@ const executer = require('../service/helper')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 require('dotenv').config()
+const { v4: uuidv4 } = require('uuid');
+
 class AuthController {
 
     static userLogin = async (req, res) => {
@@ -12,12 +14,21 @@ class AuthController {
             const result = await executer(`SELECT password,role,id FROM user_master where email="${email}"`)
             if (result.length > 0) {
                 const loggedInUser = result[0]
-                const uid=loggedInUser.id
+                const uid = loggedInUser.id
                 const isMatch = await bcrypt.compare(password, loggedInUser.password)
                 if (isMatch) {
                     const token = await jwt.sign({ uid }, process.env.JWT_SECRET, { "expiresIn": "5d" })
 
-                    res.status(200).json({ status: "success", message: "Login successfully", token: token,role:loggedInUser.role });
+                    res.status(200).json({
+                        "success": true,
+                        "data": {
+                          "uid": uid,
+                          "email":email,
+                          "role":loggedInUser.role
+                        },
+                        "message": "User retrieved successfully",
+                        "token":token
+                      });
 
                 } else {
                     res.status(400).json({ status: "failed", message: "email or password is not valid" })
@@ -46,12 +57,12 @@ class AuthController {
 
 
                     if (activeCount) {
-                        res.status(400).json({ status: "failed", message: "email already exists" })
+                        res.status(400).json({ status:false, message: "email already exists" })
                     } else {
                         //create account
 
                         const salt = await bcrypt.genSalt(10)
-                        
+
                         const hashPassword = await bcrypt.hash(password, salt)
                         const token = jwt.sign({ email }, process.env.JWT_SECRET, { "expiresIn": "5d" })
 
@@ -71,17 +82,26 @@ class AuthController {
                         const eduResult = await executer(studentEducationQuery)
 
 
-                        res.status(201).json({ status: "success", message: "Register successfully", token: token });
+                        res.status(201).json({
+                            "success": true,
+                            "data": {
+                              "uid": uid,
+                              "email":email,
+                              "role":role
+                            },
+                            "message": "Account created successfully",
+                            "token":token
+                          });
                     }
                 } catch (e) {
-                    res.status(400).json({ status: "failed", message: e.message })
+                    res.status(400).json({ status:false, message: e.message })
                 }
             } else {
-                res.status(400).json({ status: "failed", message: "password and confirm password not match" })
+                res.status(400).json({ status:false, message: "password and confirm password not match" })
             }
 
         } else {
-            res.status(400).json({ status: "failed", message: "please enter all values" })
+            res.status(400).json({ status: false, message: "please enter all values" })
         }
 
     }
@@ -126,21 +146,30 @@ class AuthController {
                             const subjectResult = await executer(teacherSubjectQuery)
                         }
 
-                        res.status(201).json({ status: "success", message: "Register successfully", token: token });
+                        res.status(201).json({
+                            "success": true,
+                            "data": {
+                              "uid": uid,
+                              "email":email,
+                              "role":role
+                            },
+                            "message": "Account created successfully",
+                            "token":token
+                          });
                     }
                 } catch (e) {
-                    res.status(400).json({ status: "failed", message: e.message })
+                    res.status(400).json({ status:false, message: e.message })
                 }
             } else {
-                res.status(400).json({ status: "failed", message: "password and confirm password not match" })
+                res.status(400).json({ status:false, message: "password and confirm password not match" })
             }
 
         } else {
-            res.status(400).json({ status: "failed", message: "please enter all values" })
+            res.status(400).json({ status:false, message: "please enter all values" })
         }
 
     }
-    
+
     static adminRegistration = async (req, res) => {
         const { fname, lname, email, password, cpassword, city, address, image, phone, role, admin_role } = req.body;
 
@@ -180,17 +209,26 @@ class AuthController {
 
                         }
 
-                        res.status(201).json({ status: "success", message: "Register successfully", token: token });
+                        res.status(201).json({
+                            "success": true,
+                            "data": {
+                              "uid": uid,
+                              "email":email,
+                              "role":role
+                            },
+                            "message": "Account created successfully",
+                            "token":token
+                          });
                     }
                 } catch (e) {
-                    res.status(400).json({ status: "failed", message: e.message })
+                    res.status(400).json({ status:false, message: e.message })
                 }
             } else {
-                res.status(400).json({ status: "failed", message: "password and confirm password not match" })
+                res.status(400).json({ status: false, message: "password and confirm password not match" })
             }
 
         } else {
-            res.status(400).json({ status: "failed", message: "please enter all values" })
+            res.status(400).json({ status: false, message: "please enter all values" })
         }
     }
 
@@ -200,12 +238,18 @@ class AuthController {
         if (email) {
             const result = await this.isActiveUser(email)
             if (result) {
-                res.status(200).json({ status: "success", message: "mail sent" })
+                res.status(200).json({
+                    "success": true,
+                    "data": {
+                      "email":email,
+                    },
+                    "message": "Email Sent Successfully",
+                  })
             } else {
-                res.status(400).json({ status: "failed", message: "user not exists" })
+                res.status(400).json({ status:false, message: "user not exists" })
             }
         } else {
-            res.status(400).json({ status: "failed", message: "please enter email" })
+            res.status(400).json({ status:false, message: "please enter email" })
         }
 
     }
@@ -218,6 +262,7 @@ class AuthController {
         return activeCount > 0
     }
 
+    
 
 }
 

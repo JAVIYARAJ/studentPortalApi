@@ -5,7 +5,6 @@ class Util {
         const formattedDate = currentDate.toISOString().replace('T', ' ').replace(/\..+/, '');
         return formattedDate
     }
-
 }
 
 module.exports=Util

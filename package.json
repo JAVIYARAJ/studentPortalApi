@@ -15,6 +15,10 @@
     "jsonwebtoken": "^9.0.0",
     "moment": "^2.29.4",
     "mysql2": "^3.3.5",
-    "nodemon": "^2.0.22"
+    "nodemon": "^2.0.22",
+    "uuid": "^9.0.0"
+  },
+  "engines": {
+    "node": "18.16.0"
   }
 }

@@ -10,7 +10,8 @@ const conn=mysql.createConnection({
 })
 
 
-conn.connect(()=>{
+conn.connect((error)=>{
+    console.log(error)
     console.log("database connect successfully")
 })
 
