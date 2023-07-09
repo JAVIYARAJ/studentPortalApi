@@ -12,11 +12,8 @@ app.use('/auth',authRoute)
 app.use('/student',studentRoute)
 app.use('/teacher',teacherRoute)
 
-app.get('/test',(req,res)=>{
-    res.json("test")
-})
 
-app.listen(3000,()=>{
+app.listen(process.env.port,()=>{
     console.log("server is running")
 })
 
