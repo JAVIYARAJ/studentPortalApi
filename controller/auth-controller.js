@@ -17,7 +17,7 @@ class AuthController {
                 const uid = loggedInUser.id
                 const isMatch = await bcrypt.compare(password, loggedInUser.password)
                 if (isMatch) {
-                    const token = await jwt.sign({ uid }, process.env.JWT_SECRET, { "expiresIn": "5d" })
+                    const token = await jwt.sign({ uid }, "raj", { "expiresIn": "5d" })
 
                     res.status(200).json({
                         "success": true,
@@ -64,7 +64,7 @@ class AuthController {
                         const salt = await bcrypt.genSalt(10)
 
                         const hashPassword = await bcrypt.hash(password, salt)
-                        const token = jwt.sign({ email }, process.env.JWT_SECRET, { "expiresIn": "5d" })
+                        const token = jwt.sign({ email }, "raj", { "expiresIn": "5d" })
 
                         const userQuery = `INSERT INTO user_master(email, role, isDeleted, password) VALUES ('${email}', '${role}', '0', '${hashPassword}');`
 
@@ -126,7 +126,7 @@ class AuthController {
 
                         const salt = await bcrypt.genSalt(10)
                         const hashPassword = await bcrypt.hash(password, salt)
-                        const token = jwt.sign({ email }, process.env.JWT_SECRET, { "expiresIn": "5d" })
+                        const token = jwt.sign({ email }, "raj", { "expiresIn": "5d" })
 
                         const userQuery = `INSERT INTO user_master(email, role, isDeleted, password) VALUES ('${email}', '${role}', '0', '${hashPassword}');`
 
@@ -189,7 +189,7 @@ class AuthController {
 
                         const salt = await bcrypt.genSalt(10)
                         const hashPassword = await bcrypt.hash(password, salt)
-                        const token = jwt.sign({ email }, process.env.JWT_SECRET, { "expiresIn": "5d" })
+                        const token = jwt.sign({ email }, "raj", { "expiresIn": "5d" })
 
                         const userQuery = `INSERT INTO user_master(email, role, isDeleted, password) VALUES ('${email}', '${role}', '0', '${hashPassword}');`
 

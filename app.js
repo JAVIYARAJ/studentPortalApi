@@ -13,7 +13,7 @@ app.use('/student',studentRoute)
 app.use('/teacher',teacherRoute)
 
 
-app.listen(process.env.port,()=>{
+app.listen(8000,()=>{
     console.log("server is running")
 })
 
