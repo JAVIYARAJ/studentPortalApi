@@ -11,62 +11,68 @@ require('dotenv').config()
 class StudentController {
 
     static markAttendance = async (req, res) => {
-        
+
         const authHeader = req.headers['authorization']
         const { status } = req.body
-        
-        if (!authHeader) {
-            res.status(401).json({ status: false, message: 'Authorization header missing' });
-        } else {
-            const token = authHeader.split(" ")[2];
 
-            //verify token
-            const response = await jwt.verify(token, process.env.JWT_SECRET)
+        if (status) {
+            if (!authHeader) {
+                res.status(401).json({ status: false, message: 'Authorization header missing' });
+            } else {
+                const token = authHeader.split(" ")[2];
 
-            if (response) {
-                const uid = response.uid
+                //verify token
+                const response = await jwt.verify(token, process.env.JWT_SECRET)
 
-                //check that current user is student or not
-                const isStudentQuery = `SELECT count(*) as isStudent FROM user_master where role="student" and id=${uid}`
+                if (response) {
+                    const uid = response.uid
 
-
-                const isStudentResult = await executer(isStudentQuery)
-
-                if (isStudentResult[0].isStudent > 0) {
-
-                    //check that student is already mark attendance or not
-                    const df = moment(currentTime, "YYYY-MM-DD")
-                    const date = (df.format()).split("T")[0]
-
-                    const statusQuery = `SELECT count(*) as count FROM student_attendance_master where createdAt like '%${date}%' and std_id=${uid}`
-
-                    const isMarkDone = await executer(statusQuery)
+                    //check that current user is student or not
+                    const isStudentQuery = `SELECT count(*) as isStudent FROM user_master where role="student" and id=${uid}`
 
 
-                    if (isMarkDone[0].count > 0) {
-                        res.status(200).json({ status: true, message: 'already you have marked your attendance for today' })
+                    const isStudentResult = await executer(isStudentQuery)
+
+                    if (isStudentResult[0].isStudent > 0) {
+
+                        //check that student is already mark attendance or not
+                        const df = moment(currentTime, "YYYY-MM-DD")
+                        const date = (df.format()).split("T")[0]
+
+                        const statusQuery = `SELECT count(*) as count FROM student_attendance_master where createdAt like '%${date}%' and std_id=${uid}`
+
+                        const isMarkDone = await executer(statusQuery)
+
+
+                        if (isMarkDone[0].count > 0) {
+                            res.status(200).json({ status: true, message: 'already you have marked your attendance for today' })
+                        } else {
+
+                            //mark attendance
+                            const attendanceQuery = `insert into student_attendance_master (std_id,status) values(${uid},'${status}')`
+
+                            const result = await executer(attendanceQuery)
+
+                            res.status(200).json({ status: true, message: "Attendance mark successfully", status: status })
+                        }
+
                     } else {
-
-                        //mark attendance
-                        const attendanceQuery = `insert into student_attendance_master (std_id,status) values(${uid},'${status}')`
-
-                        const result = await executer(attendanceQuery)
-
-                        res.status(200).json({ status: true, message: "Attendance mark successfully", status: status })
+                        res.status(400).json({
+                            "success": false,
+                            "message": "Student Account Not Exists",
+                        });
                     }
 
                 } else {
-                    res.status(400).json({
-                        "success": false,
-                        "message": "Student Account Not Exists",
-                    });
+                    res.status(401).json({ status: false, message: "UnAuthorization User" });
                 }
 
-            } else {
-                res.status(401).json({ status: false, message: "UnAuthorization User" });
             }
-
+        } else {
+            res.status(200).json({ status: "failed", message: "please specified attendance type." })
         }
+
+
     }
 
     //optional- at this moment not required
@@ -204,19 +210,19 @@ class StudentController {
 
                             const isLeaveResult = await executer(isLeaveQuery)
 
-                            if (isLeaveResult[0].isLeave==0) {
+                            if (isLeaveResult[0].isLeave == 0) {
 
-                                const leaveQuery=`INSERT INTO student_leave_master ( std_id, leave_date, teacher_id, reason) VALUES ('${uid}', '${leave_date}','${teacher_id}', '${reason}');`
+                                const leaveQuery = `INSERT INTO student_leave_master ( std_id, leave_date, teacher_id, reason) VALUES ('${uid}', '${leave_date}','${teacher_id}', '${reason}');`
 
-                                const leaveResult=await executer(leaveQuery)
+                                const leaveResult = await executer(leaveQuery)
 
                                 res.status(200).json({
                                     "success": true,
                                     "message": "Leave applied successfully",
                                     "date": leave_date,
-                                    "teacher_id":teacher_id,
+                                    "teacher_id": teacher_id,
                                     "reason": reason,
-                                    "status":default_status
+                                    "status": default_status
                                 });
                             } else {
                                 res.status(200).json({
@@ -253,7 +259,7 @@ class StudentController {
         }
     }
 
-    
+
 }
 
 module.exports = StudentController

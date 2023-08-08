@@ -17,18 +17,18 @@ class AuthController {
                 const uid = loggedInUser.id
                 const isMatch = await bcrypt.compare(password, loggedInUser.password)
                 if (isMatch) {
-                    const token = await jwt.sign({ uid }, "raj", { "expiresIn": "5d" })
+                    const token = await jwt.sign({ uid }, process.env.JWT_SECRET, { "expiresIn": "5d" })
 
                     res.status(200).json({
                         "success": true,
                         "data": {
-                          "uid": uid,
-                          "email":email,
-                          "role":loggedInUser.role
+                            "uid": uid,
+                            "email": email,
+                            "role": loggedInUser.role
                         },
                         "message": "User retrieved successfully",
-                        "token":token
-                      });
+                        "token": token
+                    });
 
                 } else {
                     res.status(400).json({ status: "failed", message: "email or password is not valid" })
@@ -57,7 +57,7 @@ class AuthController {
 
 
                     if (activeCount) {
-                        res.status(400).json({ status:false, message: "email already exists" })
+                        res.status(400).json({ status: false, message: "email already exists" })
                     } else {
                         //create account
 
@@ -85,19 +85,19 @@ class AuthController {
                         res.status(201).json({
                             "success": true,
                             "data": {
-                              "uid": uid,
-                              "email":email,
-                              "role":role
+                                "uid": uid,
+                                "email": email,
+                                "role": role
                             },
                             "message": "Account created successfully",
-                            "token":token
-                          });
+                            "token": token
+                        });
                     }
                 } catch (e) {
-                    res.status(400).json({ status:false, message: e.message })
+                    res.status(400).json({ status: false, message: e.message })
                 }
             } else {
-                res.status(400).json({ status:false, message: "password and confirm password not match" })
+                res.status(400).json({ status: false, message: "password and confirm password not match" })
             }
 
         } else {
@@ -105,7 +105,7 @@ class AuthController {
         }
 
     }
-
+    
     static teacherRegistration = async (req, res) => {
         const { fname, lname, email, password, cpassword, city, bod, address, image, phone, role, education, experience, subjects } = req.body;
 
@@ -149,23 +149,23 @@ class AuthController {
                         res.status(201).json({
                             "success": true,
                             "data": {
-                              "uid": uid,
-                              "email":email,
-                              "role":role
+                                "uid": uid,
+                                "email": email,
+                                "role": role
                             },
                             "message": "Account created successfully",
-                            "token":token
-                          });
+                            "token": token
+                        });
                     }
                 } catch (e) {
-                    res.status(400).json({ status:false, message: e.message })
+                    res.status(400).json({ status: false, message: e.message })
                 }
             } else {
-                res.status(400).json({ status:false, message: "password and confirm password not match" })
+                res.status(400).json({ status: false, message: "password and confirm password not match" })
             }
 
         } else {
-            res.status(400).json({ status:false, message: "please enter all values" })
+            res.status(400).json({ status: false, message: "please enter all values" })
         }
 
     }
@@ -212,16 +212,16 @@ class AuthController {
                         res.status(201).json({
                             "success": true,
                             "data": {
-                              "uid": uid,
-                              "email":email,
-                              "role":role
+                                "uid": uid,
+                                "email": email,
+                                "role": role
                             },
                             "message": "Account created successfully",
-                            "token":token
-                          });
+                            "token": token
+                        });
                     }
                 } catch (e) {
-                    res.status(400).json({ status:false, message: e.message })
+                    res.status(400).json({ status: false, message: e.message })
                 }
             } else {
                 res.status(400).json({ status: false, message: "password and confirm password not match" })
@@ -241,15 +241,15 @@ class AuthController {
                 res.status(200).json({
                     "success": true,
                     "data": {
-                      "email":email,
+                        "email": email,
                     },
                     "message": "Email Sent Successfully",
-                  })
+                })
             } else {
-                res.status(400).json({ status:false, message: "user not exists" })
+                res.status(400).json({ status: false, message: "user not exists" })
             }
         } else {
-            res.status(400).json({ status:false, message: "please enter email" })
+            res.status(400).json({ status: false, message: "please enter email" })
         }
 
     }
@@ -262,8 +262,94 @@ class AuthController {
         return activeCount > 0
     }
 
-    
+    static getUserData = async (req, res) => {
+        const { role } = req.query
+        const authHeader = req.headers['authorization']
+        try{
 
+            if (role) {
+
+                if (!authHeader) {
+                    res.status(401).json({ status: "failed", message: 'Authorization header missing' })
+                } else {
+                    const token = authHeader.split(" ")[2];
+                    //verify token
+                    const response = await jwt.verify(token, process.env.JWT_SECRET)
+                    if (response) {
+                        const uid = response.uid
+                        if (role == "student") {
+    
+                            //check that current user is student or not
+                            const isStudentQuery = `SELECT count(*) as isUser FROM user_master where role="${role}" and id=${uid}`
+    
+                            const isStudentResult = await executer(isStudentQuery)
+
+                            if (isStudentResult[0].isUser > 0) {
+                                const studentInfoResult = await executer(`select * from student where student.std_id=${uid}`)
+                                console.log(studentInfoResult)
+                                res.status(200).json({
+                                    "success": "failed",
+                                    data:studentInfoResult,
+                                });
+                            } else {
+                                res.status(200).json({
+                                    "success": "success",
+                                    "message": "Student Account Not Exists",
+                                });
+                            }
+                        } else if (role == "teacher") {
+                            //check that current user is student or not
+                            const isStudentQuery = `SELECT count(*) as isUser FROM user_master where role="${role}" and id=${uid}`
+    
+                            const isTeacherResult = await executer(isStudentQuery)
+                            if (isTeacherResult[0].isUser > 0) {
+                                const teacherInfoResult = await executer(`select * from teacher where teacher.teacher_id=${uid}`)
+                                console.log(teacherInfoResult)
+                                res.status(200).json({
+                                    "success": "success",
+                                    data:teacherInfoResult,
+                                });
+                            } else {
+                                res.status(200).json({
+                                    "success": "failed",
+                                    "message": "Teacher Account Not Exists",
+                                });
+                            }
+                        } else if (role == "admin") {
+                            //check that current user is student or not
+                            const isStudentQuery = `SELECT count(*) as isUser FROM user_master where role="${role}" and id=${uid}`
+    
+                            const isAdminResult = await executer(isStudentQuery)
+                            if (isAdminResult[0].isUser > 0) {
+                                const adminInfoResult = await executer(`select * from admin_master where admin_master.admin_id=${uid}`)
+                                console.log(adminInfoResult)
+                                res.status(200).json({
+                                    "success": "success",
+                                    data:adminInfoResult,
+                                });
+                            } else {
+                                res.status(200).json({
+                                    "success": "failed",
+                                    "message": "Admin Account Not Exists",
+                                });
+                            }
+                        } else {
+                            res.status(200).json({ status: "failed", message: "user role is not valid." })
+                        }
+                    } else {
+                        res.status(401).json({ status: false, message: "UnAuthorization User" });
+                    }
+                }
+            } else {
+                res.status(200).json({ status: "failed", message: "please specified user role." })
+            }
+        }catch(e){
+            console.log(e)
+        }
+
+    }
 }
+
+
 
 module.exports = AuthController

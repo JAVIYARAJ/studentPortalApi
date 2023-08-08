@@ -12,8 +12,7 @@ app.use('/auth',authRoute)
 app.use('/student',studentRoute)
 app.use('/teacher',teacherRoute)
 
-
-app.listen(8000,()=>{
+app.listen(3000,()=>{
     console.log("server is running")
 })
 
