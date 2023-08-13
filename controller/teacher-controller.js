@@ -30,14 +30,14 @@ class TeacherController {
                     const leaveUpdateResult = await executer(leaveUpdateQuery)
 
                     if (status == "rejected") {
-                        res.status(200).json({ status: "success", leave_id: leave_id, std_id: (leaveResult[0].std_id), leave_status: status, message: 'leave status updated successfully' })
+                        res.status(200).json({ status: "success", leave_id: leave_id, std_id: (leaveResult[0].id), leave_status: status, message: 'leave status updated successfully' })
                     } else {
-                        const attendanceQuery = `insert into student_attendance_master (std_id,status) values(${leaveResult[0].std_id},'absent')`
+                        const attendanceQuery = `insert into student_attendance_master (id,status) values(${leaveResult[0].std_id},'absent')`
 
                         const attendanceResult = await executer(attendanceQuery)
 
 
-                        res.status(200).json({ status: "success", leave_id: leave_id, std_id: (leaveResult[0].std_id), leave_status: status, message: 'leave status updated successfully.' })
+                        res.status(200).json({ status: "success", leave_id: leave_id, std_id: (leaveResult[0].id), leave_status: status, message: 'leave status updated successfully.' })
                     }
 
 

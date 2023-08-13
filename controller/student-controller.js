@@ -17,7 +17,7 @@ class StudentController {
 
         if (status) {
             if (!authHeader) {
-                res.status(401).json({ status: "failed", message: 'Authorization header missing' });
+                res.status(401).json({ status: "failed", message: 'Authorization header missing.' });
             } else {
                 const token = authHeader.split(" ")[2];
 
@@ -39,17 +39,17 @@ class StudentController {
                         const df = moment(currentTime, "YYYY-MM-DD")
                         const date = (df.format()).split("T")[0]
 
-                        const statusQuery = `SELECT count(*) as count FROM student_attendance_master where createdAt like '%${date}%' and std_id=${uid}`
+                        const statusQuery = `SELECT count(*) as count FROM student_attendance_master where createdAt like '%${date}%' and id=${uid}`
 
                         const isMarkDone = await executer(statusQuery)
 
 
                         if (isMarkDone[0].count > 0) {
-                            res.status(200).json({ status: "success", message: 'already you have marked your attendance for today' })
+                            res.status(200).json({ status: "success", message: 'already you have marked your attendance for today.' })
                         } else {
 
                             //mark attendance
-                            const attendanceQuery = `insert into student_attendance_master (std_id,status) values(${uid},'${status}')`
+                            const attendanceQuery = `insert into student_attendance_master (id,status) values(${uid},'${status}')`
 
                             const result = await executer(attendanceQuery)
 
@@ -82,7 +82,7 @@ class StudentController {
         const date = (df.format()).split("T")[0]
 
         const statusQuery = `
-        SELECT count(*) as count FROM student_attendance_master where createdAt like '%${date}%' and std_id=${id}`
+        SELECT count(*) as count FROM student_attendance_master where createdAt like '%${date}%' and id=${id}`
 
         const result = await executer(statusQuery)
 
@@ -104,10 +104,10 @@ class StudentController {
                 //get all specified year data
                 var yearDataQuery = ``
                 if (status == "all") {
-                    yearDataQuery = `SELECT * FROM student_attendance_master where createdAt like '%${year}%' and std_id=${id};
+                    yearDataQuery = `SELECT * FROM student_attendance_master where createdAt like '%${year}%' and id=${id};
                     `
                 } else {
-                    yearDataQuery = `SELECT * FROM student_attendance_master where createdAt like '%${year}%' and std_id=${id} and status='${status}';
+                    yearDataQuery = `SELECT * FROM student_attendance_master where createdAt like '%${year}%' and id=${id} and status='${status}';
                 `
                 }
 
@@ -131,10 +131,10 @@ class StudentController {
                     var monthDataQuery = ""
 
                     if (status == "all") {
-                        monthDataQuery = `SELECT * FROM student_attendance_master where createdAt like '%${year}-${number}%' and std_id=${id};
+                        monthDataQuery = `SELECT * FROM student_attendance_master where createdAt like '%${year}-${number}%' and id=${id};
                         `
                     } else {
-                        monthDataQuery = `SELECT * FROM student_attendance_master where createdAt like '%${year}-${number}%' and std_id=${id} and status='${status}';
+                        monthDataQuery = `SELECT * FROM student_attendance_master where createdAt like '%${year}-${number}%' and id=${id} and status='${status}';
                         `
                     }
 
@@ -165,7 +165,7 @@ class StudentController {
         }
 
     }
-
+    
     static studentLeave = async (req, res) => {
         const authHeader = req.headers['authorization']
 
@@ -206,13 +206,13 @@ class StudentController {
                         //check that specified date leave already applied or not
                         try {
 
-                            const isLeaveQuery = `SELECT count(*) isLeave FROM student_leave_master where std_id=${uid} and leave_date like '%${leave_date}%'`
+                            const isLeaveQuery = `SELECT count(*) isLeave FROM student_leave_master where id=${uid} and leave_date like '%${leave_date}%'`
 
                             const isLeaveResult = await executer(isLeaveQuery)
 
                             if (isLeaveResult[0].isLeave == 0) {
 
-                                const leaveQuery = `INSERT INTO student_leave_master ( std_id, leave_date, teacher_id, reason) VALUES ('${uid}', '${leave_date}','${teacher_id}', '${reason}');`
+                                const leaveQuery = `INSERT INTO student_leave_master ( id, leave_date, teacher_id, reason) VALUES ('${uid}', '${leave_date}','${teacher_id}', '${reason}');`
 
                                 const leaveResult = await executer(leaveQuery)
 

@@ -67,11 +67,11 @@ class AuthController {
 
                         const uid = userResult.insertId
 
-                        const studentQuery = `INSERT INTO student (std_id, fname, lname, email, city, address, bod, phonenumber,parentname,parentemail,parentnumber) VALUES ('${uid}', '${fname}', '${lname}', '${email}', '${city}', '${address}', '${bod}', '${phone}','${parentname}','${parentemail}','${parentnumber}');`
+                        const studentQuery = `INSERT INTO student_master (id, fname, lname, email, city, address, bod, phonenumber,parentname,parentemail,parentnumber) VALUES ('${uid}', '${fname}', '${lname}', '${email}', '${city}', '${address}', '${bod}', '${phone}','${parentname}','${parentemail}','${parentnumber}');`
 
                         const studentResult = await executer(studentQuery)
 
-                        const studentEducationQuery = `INSERT INTO student_education_master (edu_id, standard, graduation, percentage) VALUES ('${uid}', '${standard}', '${graduation}', ${percentage});
+                        const studentEducationQuery = `INSERT INTO student_education_master (id, standard, graduation, percentage) VALUES ('${uid}', '${standard}', '${graduation}', ${percentage});
                         `
 
                         const eduResult = await executer(studentEducationQuery)
@@ -122,13 +122,13 @@ class AuthController {
 
                         const uid = userResult.insertId
 
-                        const studentQuery = `INSERT INTO teacher (teacher_id, fname, lname, email, bod, phone, city, address,education,experience,image) VALUES ('${uid}', '${fname}', '${lname}', '${email}', '${bod}', '${phone}', '${city}', '${address}','${education}',${experience},'${image}');`
+                        const studentQuery = `INSERT INTO teacher_master (id, fname, lname, email, bod, phone, city, address,education,experience,image) VALUES ('${uid}', '${fname}', '${lname}', '${email}', '${bod}', '${phone}', '${city}', '${address}','${education}',${experience},'${image}');`
 
                         const teacherResult = await executer(studentQuery)
 
                         for (let i = 0; i < subjects.length; i++) {
 
-                            const teacherSubjectQuery = `INSERT INTO teacher_subject_master (teacher_id, subject) VALUES ('${uid}', '${subjects[i]}');
+                            const teacherSubjectQuery = `INSERT INTO teacher_subject_master (id, subject) VALUES ('${uid}', '${subjects[i]}');
                             `
 
                             const subjectResult = await executer(teacherSubjectQuery)
@@ -179,12 +179,12 @@ class AuthController {
                         const uid = userResult.insertId
 
                         if (image != undefined) {
-                            const studentQuery = `INSERT INTO admin_master (admin_id, fname, lname, email, phone, city, address,admin_role,image) VALUES ('${uid}', '${fname}', '${lname}', '${email}', '${phone}', '${city}', '${address}', '${admin_role}','${Image}');`
+                            const studentQuery = `INSERT INTO admin_master (id, fname, lname, email, phone, city, address,admin_role,image) VALUES ('${uid}', '${fname}', '${lname}', '${email}', '${phone}', '${city}', '${address}', '${admin_role}','${Image}');`
 
                             const teacherResult = await executer(studentQuery)
 
                         } else {
-                            const studentQuery = `INSERT INTO admin_master (admin_id, fname, lname, email, phone, city, address,admin_role) VALUES ('${uid}', '${fname}', '${lname}', '${email}', '${phone}', '${city}', '${address}', '${admin_role}');`
+                            const studentQuery = `INSERT INTO admin_master (id, fname, lname, email, phone, city, address,admin_role) VALUES ('${uid}', '${fname}', '${lname}', '${email}', '${phone}', '${city}', '${address}', '${admin_role}');`
 
                             const teacherResult = await executer(studentQuery)
 
@@ -237,7 +237,7 @@ class AuthController {
             if (role) {
 
                 if (!authHeader) {
-                    res.status(401).json({ status: "failed", message: 'Authorization header missing' })
+                    res.status(401).json({ status: "failed", message: 'Authorization header missing.' })
                 } else {
                     const token = authHeader.split(" ")[2];
                     //verify token
@@ -252,15 +252,19 @@ class AuthController {
                             const isStudentResult = await executer(isStudentQuery)
 
                             if (isStudentResult[0].isUser > 0) {
-                                const studentInfoResult = await executer(`select * from student where student.std_id=${uid}`)
-                                console.log(studentInfoResult)
+                                const studentInfoResult = await executer(`select student_master.fname,student_master.lname,student_master.email,student_master.city,student_master.address,student_master.bod,
+                                student_master.parentnumber,student_master.image,student_master
+                                .parentname,student_master.parentemail,student_master.parentnumber,
+                                student_education_master.standard,student_education_master.graduation,student_education_master.percentage from student_master inner join student_education_master where student_master.id=${uid}`)
+
                                 res.status(200).json({
-                                    "success": "failed",
-                                    data: studentInfoResult,
+                                    "status": "success",
+                                    data: studentInfoResult ? studentInfoResult[0] : [],
+                                    "message":"Data fetch successfully."
                                 });
                             } else {
                                 res.status(200).json({
-                                    "success": "success",
+                                    "status": "failed",
                                     "message": "Student Account Not Exists.",
                                 });
                             }
@@ -270,15 +274,26 @@ class AuthController {
 
                             const isTeacherResult = await executer(isStudentQuery)
                             if (isTeacherResult[0].isUser > 0) {
-                                const teacherInfoResult = await executer(`select * from teacher where teacher.teacher_id=${uid}`)
-                                console.log(teacherInfoResult)
+                                const teacherInfoResult = await executer(`select * from teacher_master where teacher_master.id=${uid}`)
+
+                                const subjects=await executer(`SELECT teacher_subject_master.subject FROM teacher_subject_master where teacher_subject_master.id=${uid}`)
+
+                                var subjectsList=[]
+                                for(let i=0;i<subjects.length;i++) {
+                                    subjectsList[i]=subjects[i].subject
+                                }   
+                                
                                 res.status(200).json({
-                                    "success": "success",
-                                    data: teacherInfoResult,
+                                    "status": "success",
+                                    data:{
+                                        "data":teacherInfoResult ? teacherInfoResult[0] : [],
+                                        "subjects":subjectsList
+                                    },
+                                    "message":"Data fetch successfully."
                                 });
                             } else {
                                 res.status(200).json({
-                                    "success": "failed",
+                                    "status": "failed",
                                     "message": "Teacher Account Not Exists.",
                                 });
                             }
@@ -288,11 +303,12 @@ class AuthController {
 
                             const isAdminResult = await executer(isStudentQuery)
                             if (isAdminResult[0].isUser > 0) {
-                                const adminInfoResult = await executer(`select * from admin_master where admin_master.admin_id=${uid}`)
-                                console.log(adminInfoResult)
+                                const adminInfoResult = await executer(`select * from admin_master where admin_master.id=${uid}`)
+
                                 res.status(200).json({
-                                    "success": "success",
-                                    data: adminInfoResult,
+                                    "status": "success",
+                                    data:adminInfoResult ? adminInfoResult[0] : [],
+                                    "message":"Data fetch successfully."
                                 });
                             } else {
                                 res.status(200).json({
@@ -316,7 +332,6 @@ class AuthController {
 
     }
 
-
     //reusable function
     static isActiveUser = async (email) => {
         var isActiveUser = await executer(`SELECT count(*) as count from user_master where email="${email}"`)
@@ -326,7 +341,5 @@ class AuthController {
         return activeCount > 0
     }
 }
-
-
 
 module.exports = AuthController
