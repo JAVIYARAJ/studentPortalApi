@@ -30,33 +30,33 @@ class TeacherController {
                     const leaveUpdateResult = await executer(leaveUpdateQuery)
 
                     if (status == "rejected") {
-                        res.status(200).json({ status: true, leave_id: leave_id, std_id: (leaveResult[0].std_id), leave_status: status, message: 'leave status updated successfully' })
+                        res.status(200).json({ status: "success", leave_id: leave_id, std_id: (leaveResult[0].std_id), leave_status: status, message: 'leave status updated successfully' })
                     } else {
                         const attendanceQuery = `insert into student_attendance_master (std_id,status) values(${leaveResult[0].std_id},'absent')`
 
                         const attendanceResult = await executer(attendanceQuery)
 
 
-                        res.status(200).json({ status: true, leave_id: leave_id, std_id: (leaveResult[0].std_id), leave_status: status, message: 'leave status updated successfully' })
+                        res.status(200).json({ status: "success", leave_id: leave_id, std_id: (leaveResult[0].std_id), leave_status: status, message: 'leave status updated successfully.' })
                     }
 
 
                 } else {
 
-                    res.status(400).json({ status: false, message: "already leave approved" })
+                    res.status(200).json({ status: "failed", message: "already leave approved." })
                 }
 
 
             } else {
 
-                res.status(400).json({ status: false, message: "you haven't authority to approve leave" })
+                res.status(200).json({ status: "failed", message: "you haven't authority to approve leave." })
 
             }
 
 
 
         } else {
-            res.status(400).json({ status: false, message: 'please provide all values' })
+            res.status(200).json({ status: "failed", message: 'please provide all values.' })
         }
 
 

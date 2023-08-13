@@ -17,7 +17,7 @@ class StudentController {
 
         if (status) {
             if (!authHeader) {
-                res.status(401).json({ status: false, message: 'Authorization header missing' });
+                res.status(401).json({ status: "failed", message: 'Authorization header missing' });
             } else {
                 const token = authHeader.split(" ")[2];
 
@@ -45,7 +45,7 @@ class StudentController {
 
 
                         if (isMarkDone[0].count > 0) {
-                            res.status(200).json({ status: true, message: 'already you have marked your attendance for today' })
+                            res.status(200).json({ status: "success", message: 'already you have marked your attendance for today' })
                         } else {
 
                             //mark attendance
@@ -53,18 +53,18 @@ class StudentController {
 
                             const result = await executer(attendanceQuery)
 
-                            res.status(200).json({ status: true, message: "Attendance mark successfully", status: status })
+                            res.status(200).json({ status: "success", message: "Attendance mark successfully.", Attendance_status: status })
                         }
 
                     } else {
-                        res.status(400).json({
-                            "success": false,
-                            "message": "Student Account Not Exists",
+                        res.status(200).json({
+                            "success": "failed",
+                            "message": "Student Account Not Exists.",
                         });
                     }
 
                 } else {
-                    res.status(401).json({ status: false, message: "UnAuthorization User" });
+                    res.status(401).json({ status: "failed", message: "UnAuthorization User" });
                 }
 
             }
@@ -74,7 +74,7 @@ class StudentController {
 
 
     }
-
+    
     //optional- at this moment not required
     static checkAttendance = async (req, res) => {
         const { id } = req.query
@@ -89,9 +89,9 @@ class StudentController {
         console.log(result)
 
         if (result[0].count > 0) {
-            res.status(200).json({ status: true, message: 'data fetch successfully', data: result })
+            res.status(200).json({ status: "success", message: 'data fetch successfully.', data: result })
         } else {
-            res.status(400).json({ status: false, message: '' })
+            res.status(200).json({ status: "failed", message: '' })
         }
     }
 
@@ -113,9 +113,9 @@ class StudentController {
 
                 const result = await executer(yearDataQuery)
                 res.status(200).json({
-                    "success": true,
+                    "status": "success",
                     "year": year,
-                    "message": "year data get successfully",
+                    "message": "year data get successfully.",
                     "data": result
                 });
             } else if (type == "month") {
@@ -142,25 +142,25 @@ class StudentController {
 
                     const result = await executer(monthDataQuery)
                     res.status(200).json({
-                        "success": true,
+                        "status": "success",
                         "year": year,
                         "month": number,
-                        "message": "month data get successfully",
+                        "message": "month data get successfully.",
                         "data": result
                     });
                 } else {
-                    res.status(400).json({
-                        "success": false,
-                        "message": "Please provide valid month",
+                    res.status(200).json({
+                        "status": "failed",
+                        "message": "Please provide valid month.",
                     });
                 }
             }
 
 
         } else {
-            res.status(400).json({
-                "success": false,
-                "message": "Please provide all values",
+            res.status(200).json({
+                "status":"failed",
+                "message": "Please provide all values.",
             });
         }
 
@@ -217,8 +217,8 @@ class StudentController {
                                 const leaveResult = await executer(leaveQuery)
 
                                 res.status(200).json({
-                                    "success": true,
-                                    "message": "Leave applied successfully",
+                                    "status": "success",
+                                    "message": "Leave applied successfully.",
                                     "date": leave_date,
                                     "teacher_id": teacher_id,
                                     "reason": reason,
@@ -226,8 +226,8 @@ class StudentController {
                                 });
                             } else {
                                 res.status(200).json({
-                                    "success": true,
-                                    "message": "already applied leave for this date",
+                                    "status": "success",
+                                    "message": "already applied leave for this date.",
                                     "date": leave_date
                                 });
                             }
@@ -235,25 +235,25 @@ class StudentController {
 
                         } catch (e) {
                             res.status(400).json({
-                                "success": false,
+                                "status": "failed",
                                 "message": e.message,
                             });
                         }
                     } else {
-                        res.status(400).json({
-                            "success": false,
-                            "message": "Teacher Account Not Exists",
+                        res.status(200).json({
+                            "status": "failed",
+                            "message": "Teacher Account Not Exists.",
                         });
                     }
                 } else {
-                    res.status(400).json({
-                        "success": false,
-                        "message": "Student Account Not Exists",
+                    res.status(200).json({
+                        "status": "failed",
+                        "message": "Student Account Not Exists.",
                     });
                 }
 
             } else {
-                res.status(401).json({ status: false, message: "UnAuthorization User" });
+                res.status(401).json({ status: "failed", message: "UnAuthorization User." });
             }
 
         }

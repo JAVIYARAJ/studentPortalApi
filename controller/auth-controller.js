@@ -2,7 +2,6 @@ const executer = require('../service/helper')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 require('dotenv').config()
-const { v4: uuidv4 } = require('uuid');
 
 class AuthController {
 
@@ -20,51 +19,47 @@ class AuthController {
                     const token = await jwt.sign({ uid }, process.env.JWT_SECRET, { "expiresIn": "5d" })
 
                     res.status(200).json({
-                        "success": true,
+                        "status": "success",
                         "data": {
-                            "uid": uid,
-                            "email": email,
-                            "role": loggedInUser.role
+                            "role": loggedInUser.role,
+                            "token": token
                         },
-                        "message": "User retrieved successfully",
-                        "token": token
+                        "message": "Login successfully.",
                     });
 
                 } else {
-                    res.status(400).json({ status: "failed", message: "email or password is not valid" })
+                    res.status(200).json({ status: "failed", message: "email or password is not valid." })
                 }
             } else {
-                res.status(400).json({ status: "failed", message: "user not exists" })
+                res.status(200).json({ status: "failed", message: "user not exists." })
             }
 
         } else {
-            res.status(400).json({ status: "failed", message: "please enter email and password" })
+            res.status(200).json({ status: "failed", message: "please enter email and password." })
 
         }
     }
 
     static studentRegistration = async (req, res) => {
-        const { fname, lname, email, password, cpassword, city, bod, address, image, phone, role, standard, graduation, percentage } = req.body;
 
-        if (fname && lname && email && password && cpassword && city && bod && address && phone && standard && percentage) {
+        const { fname, lname, email, password, cpassword, city, bod, address, image, phone, role, standard, graduation, percentage, parentname, parentemail, parentnumber } = req.body;
+
+        if (fname && lname && email && password && cpassword && city && bod && address && phone && standard && percentage && parentname && parentemail && parentnumber) {
 
             if (password === cpassword) {
                 try {
 
-
                     //check that is the user already exists or not
                     const activeCount = await this.isActiveUser(email)
 
-
                     if (activeCount) {
-                        res.status(400).json({ status: false, message: "email already exists" })
+                        res.status(200).json({ status: "failed", message: "email already exists." })
                     } else {
                         //create account
 
                         const salt = await bcrypt.genSalt(10)
 
                         const hashPassword = await bcrypt.hash(password, salt)
-                        const token = jwt.sign({ email }, "raj", { "expiresIn": "5d" })
 
                         const userQuery = `INSERT INTO user_master(email, role, isDeleted, password) VALUES ('${email}', '${role}', '0', '${hashPassword}');`
 
@@ -72,7 +67,7 @@ class AuthController {
 
                         const uid = userResult.insertId
 
-                        const studentQuery = `INSERT INTO student (std_id, fname, lname, email, city, address, bod, phonenumber) VALUES ('${uid}', '${fname}', '${lname}', '${email}', '${city}', '${address}', '${bod}', '${phone}');`
+                        const studentQuery = `INSERT INTO student (std_id, fname, lname, email, city, address, bod, phonenumber,parentname,parentemail,parentnumber) VALUES ('${uid}', '${fname}', '${lname}', '${email}', '${city}', '${address}', '${bod}', '${phone}','${parentname}','${parentemail}','${parentnumber}');`
 
                         const studentResult = await executer(studentQuery)
 
@@ -82,30 +77,24 @@ class AuthController {
                         const eduResult = await executer(studentEducationQuery)
 
 
-                        res.status(201).json({
-                            "success": true,
-                            "data": {
-                                "uid": uid,
-                                "email": email,
-                                "role": role
-                            },
-                            "message": "Account created successfully",
-                            "token": token
+                        res.status(200).json({
+                            "status": "success",
+                            "message": "Account created successfully.",
                         });
                     }
                 } catch (e) {
-                    res.status(400).json({ status: false, message: e.message })
+                    res.status(200).json({ status: "failed", message: e.message })
                 }
             } else {
-                res.status(400).json({ status: false, message: "password and confirm password not match" })
+                res.status(200).json({ status: "failed", message: "password and confirm password not match." })
             }
 
         } else {
-            res.status(400).json({ status: false, message: "please enter all values" })
+            res.status(200).json({ status: "failed", message: "please enter all values." })
         }
 
     }
-    
+
     static teacherRegistration = async (req, res) => {
         const { fname, lname, email, password, cpassword, city, bod, address, image, phone, role, education, experience, subjects } = req.body;
 
@@ -120,13 +109,12 @@ class AuthController {
 
 
                     if (activeCount) {
-                        res.status(400).json({ status: "failed", message: "email already exists" })
+                        res.status(200).json({ status: "failed", message: "email already exists." })
                     } else {
                         //create account
 
                         const salt = await bcrypt.genSalt(10)
                         const hashPassword = await bcrypt.hash(password, salt)
-                        const token = jwt.sign({ email }, "raj", { "expiresIn": "5d" })
 
                         const userQuery = `INSERT INTO user_master(email, role, isDeleted, password) VALUES ('${email}', '${role}', '0', '${hashPassword}');`
 
@@ -146,26 +134,20 @@ class AuthController {
                             const subjectResult = await executer(teacherSubjectQuery)
                         }
 
-                        res.status(201).json({
-                            "success": true,
-                            "data": {
-                                "uid": uid,
-                                "email": email,
-                                "role": role
-                            },
-                            "message": "Account created successfully",
-                            "token": token
+                        res.status(200).json({
+                            "status": "success",
+                            "message": "Account created successfully."
                         });
                     }
                 } catch (e) {
-                    res.status(400).json({ status: false, message: e.message })
+                    res.status(200).json({ status: "failed", message: e.message })
                 }
             } else {
-                res.status(400).json({ status: false, message: "password and confirm password not match" })
+                res.status(200).json({ status: "failed", message: "password and confirm password not match." })
             }
 
         } else {
-            res.status(400).json({ status: false, message: "please enter all values" })
+            res.status(200).json({ status: "failed", message: "please enter all values." })
         }
 
     }
@@ -183,13 +165,12 @@ class AuthController {
                     const activeCount = await this.isActiveUser(email)
 
                     if (activeCount) {
-                        res.status(400).json({ status: "failed", message: "email already exists" })
+                        res.status(200).json({ status: "failed", message: "email already exists." })
                     } else {
                         //create account
 
                         const salt = await bcrypt.genSalt(10)
                         const hashPassword = await bcrypt.hash(password, salt)
-                        const token = jwt.sign({ email }, "raj", { "expiresIn": "5d" })
 
                         const userQuery = `INSERT INTO user_master(email, role, isDeleted, password) VALUES ('${email}', '${role}', '0', '${hashPassword}');`
 
@@ -209,26 +190,20 @@ class AuthController {
 
                         }
 
-                        res.status(201).json({
-                            "success": true,
-                            "data": {
-                                "uid": uid,
-                                "email": email,
-                                "role": role
-                            },
-                            "message": "Account created successfully",
-                            "token": token
+                        res.status(200).json({
+                            "status": "success",
+                            "message": "Account created successfully.",
                         });
                     }
                 } catch (e) {
-                    res.status(400).json({ status: false, message: e.message })
+                    res.status(200).json({ status: "failed", message: e.message })
                 }
             } else {
-                res.status(400).json({ status: false, message: "password and confirm password not match" })
+                res.status(200).json({ status: "failed", message: "password and confirm password not match." })
             }
 
         } else {
-            res.status(400).json({ status: false, message: "please enter all values" })
+            res.status(200).json({ status: "failed", message: "please enter all values." })
         }
     }
 
@@ -239,33 +214,25 @@ class AuthController {
             const result = await this.isActiveUser(email)
             if (result) {
                 res.status(200).json({
-                    "success": true,
+                    "status": "success",
                     "data": {
                         "email": email,
                     },
-                    "message": "Email Sent Successfully",
+                    "message": "Email Sent Successfully.",
                 })
             } else {
-                res.status(400).json({ status: false, message: "user not exists" })
+                res.status(200).json({ status: "failed", message: "user not exists." })
             }
         } else {
-            res.status(400).json({ status: false, message: "please enter email" })
+            res.status(200).json({ status: "failed", message: "please enter email." })
         }
 
-    }
-
-    static isActiveUser = async (email) => {
-        var isActiveUser = await executer(`SELECT count(*) as count from user_master where email="${email}"`)
-
-        const activeCount = isActiveUser[0].count
-
-        return activeCount > 0
     }
 
     static getUserData = async (req, res) => {
         const { role } = req.query
         const authHeader = req.headers['authorization']
-        try{
+        try {
 
             if (role) {
 
@@ -278,10 +245,10 @@ class AuthController {
                     if (response) {
                         const uid = response.uid
                         if (role == "student") {
-    
+
                             //check that current user is student or not
                             const isStudentQuery = `SELECT count(*) as isUser FROM user_master where role="${role}" and id=${uid}`
-    
+
                             const isStudentResult = await executer(isStudentQuery)
 
                             if (isStudentResult[0].isUser > 0) {
@@ -289,64 +256,74 @@ class AuthController {
                                 console.log(studentInfoResult)
                                 res.status(200).json({
                                     "success": "failed",
-                                    data:studentInfoResult,
+                                    data: studentInfoResult,
                                 });
                             } else {
                                 res.status(200).json({
                                     "success": "success",
-                                    "message": "Student Account Not Exists",
+                                    "message": "Student Account Not Exists.",
                                 });
                             }
                         } else if (role == "teacher") {
                             //check that current user is student or not
                             const isStudentQuery = `SELECT count(*) as isUser FROM user_master where role="${role}" and id=${uid}`
-    
+
                             const isTeacherResult = await executer(isStudentQuery)
                             if (isTeacherResult[0].isUser > 0) {
                                 const teacherInfoResult = await executer(`select * from teacher where teacher.teacher_id=${uid}`)
                                 console.log(teacherInfoResult)
                                 res.status(200).json({
                                     "success": "success",
-                                    data:teacherInfoResult,
+                                    data: teacherInfoResult,
                                 });
                             } else {
                                 res.status(200).json({
                                     "success": "failed",
-                                    "message": "Teacher Account Not Exists",
+                                    "message": "Teacher Account Not Exists.",
                                 });
                             }
                         } else if (role == "admin") {
                             //check that current user is student or not
                             const isStudentQuery = `SELECT count(*) as isUser FROM user_master where role="${role}" and id=${uid}`
-    
+
                             const isAdminResult = await executer(isStudentQuery)
                             if (isAdminResult[0].isUser > 0) {
                                 const adminInfoResult = await executer(`select * from admin_master where admin_master.admin_id=${uid}`)
                                 console.log(adminInfoResult)
                                 res.status(200).json({
                                     "success": "success",
-                                    data:adminInfoResult,
+                                    data: adminInfoResult,
                                 });
                             } else {
                                 res.status(200).json({
                                     "success": "failed",
-                                    "message": "Admin Account Not Exists",
+                                    "message": "Admin Account Not Exists.",
                                 });
                             }
                         } else {
                             res.status(200).json({ status: "failed", message: "user role is not valid." })
                         }
                     } else {
-                        res.status(401).json({ status: false, message: "UnAuthorization User" });
+                        res.status(401).json({ status: "failed", message: "UnAuthorization User." });
                     }
                 }
             } else {
                 res.status(200).json({ status: "failed", message: "please specified user role." })
             }
-        }catch(e){
+        } catch (e) {
             console.log(e)
         }
 
+    }
+
+
+    //reusable function
+    static isActiveUser = async (email) => {
+        var isActiveUser = await executer(`SELECT count(*) as count from user_master where email="${email}"`)
+
+        const activeCount = isActiveUser[0].count
+
+        return activeCount > 0
     }
 }
 
