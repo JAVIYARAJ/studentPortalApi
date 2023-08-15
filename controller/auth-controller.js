@@ -95,6 +95,51 @@ class AuthController {
 
     }
 
+    static userRegister = async (req, res) => {
+
+        const { fname, lname, email, password,role } = req.body
+
+        if (fname && lname && email && password && role) {
+
+            try {
+
+                //check that is the user already exists or not
+                const activeCount = await this.isActiveUser(email)
+
+                if (activeCount) {
+                    res.status(200).json({ status: "failed", message: "email already exists." })
+                } else {
+                    //create account
+
+                    const salt = await bcrypt.genSalt(10)
+
+                    const hashPassword = await bcrypt.hash(password, salt)
+
+                    const userQuery = `INSERT INTO user_master(email, role, isDeleted, password) VALUES ('${email}', '${role}', '0', '${hashPassword}');`
+
+                    const userResult = await executer(userQuery)
+
+                    const uid = userResult.insertId
+
+                    const studentQuery = `INSERT INTO student_master (id, fname, lname, email) VALUES ('${uid}', '${fname}', '${lname}', '${email}');`
+
+                    const studentResult = await executer(studentQuery)
+
+                    res.status(200).json({
+                        "status": "success",
+                        "message": "Account created successfully.",
+                    });
+                }
+            } catch (e) {
+                res.status(200).json({ status: "failed", message: e.message })
+            }
+
+
+        } else {
+            res.status(200).json({ status: "failed", message: "please enter all values." })
+        }
+    }
+
     static teacherRegistration = async (req, res) => {
         const { fname, lname, email, password, cpassword, city, bod, address, image, phone, role, education, experience, subjects } = req.body;
 
@@ -260,7 +305,7 @@ class AuthController {
                                 res.status(200).json({
                                     "status": "success",
                                     data: studentInfoResult ? studentInfoResult[0] : [],
-                                    "message":"Data fetch successfully."
+                                    "message": "Data fetch successfully."
                                 });
                             } else {
                                 res.status(200).json({
@@ -276,20 +321,20 @@ class AuthController {
                             if (isTeacherResult[0].isUser > 0) {
                                 const teacherInfoResult = await executer(`select * from teacher_master where teacher_master.id=${uid}`)
 
-                                const subjects=await executer(`SELECT teacher_subject_master.subject FROM teacher_subject_master where teacher_subject_master.id=${uid}`)
+                                const subjects = await executer(`SELECT teacher_subject_master.subject FROM teacher_subject_master where teacher_subject_master.id=${uid}`)
 
-                                var subjectsList=[]
-                                for(let i=0;i<subjects.length;i++) {
-                                    subjectsList[i]=subjects[i].subject
-                                }   
-                                
+                                var subjectsList = []
+                                for (let i = 0; i < subjects.length; i++) {
+                                    subjectsList[i] = subjects[i].subject
+                                }
+
                                 res.status(200).json({
                                     "status": "success",
-                                    data:{
-                                        "data":teacherInfoResult ? teacherInfoResult[0] : [],
-                                        "subjects":subjectsList
+                                    data: {
+                                        "data": teacherInfoResult ? teacherInfoResult[0] : [],
+                                        "subjects": subjectsList
                                     },
-                                    "message":"Data fetch successfully."
+                                    "message": "Data fetch successfully."
                                 });
                             } else {
                                 res.status(200).json({
@@ -307,8 +352,8 @@ class AuthController {
 
                                 res.status(200).json({
                                     "status": "success",
-                                    data:adminInfoResult ? adminInfoResult[0] : [],
-                                    "message":"Data fetch successfully."
+                                    data: adminInfoResult ? adminInfoResult[0] : [],
+                                    "message": "Data fetch successfully."
                                 });
                             } else {
                                 res.status(200).json({
