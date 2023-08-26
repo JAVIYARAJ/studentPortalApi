@@ -1,4 +1,5 @@
 var express=require('express')
+const cors=require('cors')
 require("dotenv").config()
 
 var app=express()
@@ -7,6 +8,7 @@ const studentRoute=require('./routes/student-route.js')
 const teacherRoute=require('./routes/teacher-routes.js')
 
 app.use(express.json())
+app.use(cors());
 
 app.use('/auth',authRoute)
 app.use('/student',studentRoute)

@@ -12,7 +12,7 @@ const conn=mysql.createConnection({
 */
 
 const conn=mysql.createConnection({
-    database:"stdeunt_io",
+    database:"studentio",
     host:"localhost",
     user: "root",
     password:"root",
