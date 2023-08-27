@@ -57,13 +57,12 @@ class TeacherController {
             res.status(200).json({ status: "failed", message: 'please provide all values.' })
         }
     }
-    
+
     static addFacultySubject = async (req, res) => {
         const authHeader = req.headers["authorization"]
         const { subjects } = req.body
-        console.log(subjects)
-        try {
 
+        try {
             if (!authHeader) {
                 res.status(401).json({ status: "failed", message: 'Authorization header missing.' })
             } else {
@@ -77,7 +76,7 @@ class TeacherController {
                     if (subjects) {
                         const uid = response.uid
 
-                        var isActiveUser = await executer(`SELECT count(*) as count from user_master where id="${uid}" and role="faculty"`)
+                        var isActiveUser = await executer(`SELECT count(*) as count from user_master where id="${uid}" and role="admin"`)
 
                         const activeCount = isActiveUser[0].count
 
@@ -92,29 +91,30 @@ class TeacherController {
                                     const isSubjectAdded = checkSubject[0].isAdded
 
                                     if (isSubjectAdded > 0) {
+                                        subjectCodes.push(subjects[i].code)
                                         subjects.pop()
-                                    } else {
-                                        // const subjectQuery = `insert into subject_master(subject_name,subject_code,semester,isOptional) values('${subjects[i].subject}','${subjects[i].code}',${subjects[i].semester},${subjects[i].isOptional ? subjects[i].isOptional : 0}})`
-
-                                        // console.log(subjectQuery)
-
-                                        // const subjectResult = await executer(subjectQuery)
-
-                                        // console.log(subjectResult)
-
-
-
                                     }
-
-                                    console.log(subjectCodes)
                                 }
-                                
-                                if (subjectCodes.length > 0) {
-                                    res.status(400).json({ status: "failed", message: 'subject already added', codes: subjectCodes })
 
+                                console.log(subjectCodes)
+
+                                const insertQuery = `INSERT INTO subject_master(subject_name, subject_code, semester, isOptional) VALUES ?`;
+
+                                const valuesToInsert = subjects.map(subject => [
+                                    subject.subject,
+                                    subject.code,
+                                    subject.semester,
+                                    subject.isOptional ? subject.isOptional : 0
+                                ]);
+
+                                const insertResult = await executer(insertQuery, valuesToInsert)
+
+                                if (subjectCodes.length > 0) {
+                                    res.status(200).json({ status: "success", message: 'already added subject',code: subjectCodes})
                                 } else {
                                     res.status(200).json({ status: "success", message: 'subject added successfully.' })
                                 }
+
                             } else {
                                 res.status(400).json({ status: "failed", message: 'subject is not an object.' })
                             }
@@ -134,32 +134,32 @@ class TeacherController {
         }
     }
 
-    static createClass = async (req,res)=>{
+    static createClass = async (req, res) => {
         const authHeader = req.headers["authorization"]
-        
-        if(!authHeader){
+
+        if (!authHeader) {
             res.status(401).json({ status: "failed", message: 'Authorization header missing.' })
-        }else{
+        } else {
             const token = authHeader.split(" ")[2]
 
             const response = await jwt.verify(token, process.env.JWT_SECRET)
 
-            if(response){
-                const uid=response.uid
+            if (response) {
+                const uid = response.uid
 
                 var isActiveUser = await executer(`SELECT count(*) as count from user_master where id="${uid}" and role="faculty"`)
 
                 const activeCount = isActiveUser[0].count
 
-                if(activeCount>0){
+                if (activeCount > 0) {
 
-                    
 
-                }else{
+
+                } else {
                     res.status(400).json({ status: "failed", message: "permission denied for this user." });
 
                 }
-            }else{
+            } else {
                 res.status(401).json({ status: "failed", message: "UnAuthorization User." });
             }
         }

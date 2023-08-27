@@ -48,7 +48,7 @@ class AuthController {
     //completed
     static userRegister = async (req, res) => {
 
-        const { fname, lname, email, password, role,gender} = req.body
+        const { fname, lname, email, password, role, gender } = req.body
 
         if (fname && lname && email && password && role && gender) {
 
@@ -101,7 +101,28 @@ class AuthController {
                             "status": "success",
                             "message": "Account created successfully.",
                         });
-                    } else {
+                    } else if (role == "admin") {
+
+                        const salt = await bcrypt.genSalt(10)
+
+                        const hashPassword = await bcrypt.hash(password, salt)
+
+                        const userQuery = `INSERT INTO user_master(email,role,password) VALUES ('${email}', '${role}','${hashPassword}');`
+
+                        const userResult = await executer(userQuery)
+
+                        const uid = userResult.insertId
+
+                        const facultyQuery = `INSERT INTO admin_master (id, fname, lname, email,gender) VALUES ('${uid}', '${fname}', '${lname}', '${email}','${gender}');`
+
+                        const facultyResult = await executer(facultyQuery)
+
+                        res.status(200).json({
+                            "status": "success",
+                            "message": "Account created successfully.",
+                        });
+                    }
+                    else {
                         res.status(400).json({ status: "failed", message: "role is invalid." })
 
                     }
@@ -287,7 +308,7 @@ class AuthController {
     //working on it
     static forgotPassword = async (req, res) => {
         const { email, oldPassword, newPassword } = req.body
-        
+
         if (email && oldPassword && newPassword) {
 
             const isActiveUser = this.isActiveUser(email)
@@ -296,8 +317,8 @@ class AuthController {
 
 
                 const result = await executer(`SELECT password as pwd FROM user_master where user_master.email='${email}'`)
-                
-                const isOldPassword = await bcrypt.compare(oldPassword,result[0].pwd)
+
+                const isOldPassword = await bcrypt.compare(oldPassword, result[0].pwd)
 
                 if (isOldPassword) {
 
@@ -344,19 +365,17 @@ class AuthController {
 
                     var role = result[0].role
 
-                    if (role == "student") {
-                        const studentData = await queryExecuter(`select * from student_master where id=${uid}`)
+                    if (role == "student" || role == "faculty" || role == "admin") {
+                        const userData = await queryExecuter(`select * from ${role}_master where id=${uid}`)
                         res.status(200).json({
                             "status": "success",
-                            data: studentData ? studentData[0] : [],
+                            data: userData ? userData[0] : [],
                             "message": "Data fetch successfully."
                         });
-                    } else if (role == "faculty") {
-                        const facultyData = await queryExecuter(`select * from faculty_master where id=${uid}`)
-                        res.status(200).json({
-                            "status": "success",
-                            data: facultyData ? facultyData[0] : [],
-                            "message": "Data fetch successfully."
+                    }else{
+                        res.status(400).json({
+                            "status": "failed",
+                            "message": "permission denied for this user."
                         });
                     }
                 } else {
@@ -367,7 +386,7 @@ class AuthController {
             res.status(400).json({ status: "failed", message: e.message });
         }
 
-    }   
+    }
 
     //reusable function
     static isActiveUser = async (email) => {
@@ -377,7 +396,7 @@ class AuthController {
 
         return activeCount > 0
     }
-    
+
 }
 
 module.exports = AuthController
