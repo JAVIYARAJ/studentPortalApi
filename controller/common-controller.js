@@ -7,7 +7,7 @@ require('dotenv').config()
 
 class CommonController {
 
-
+    
     static getSubjects = async (req, res) => {
         const authHeader = req.headers['authorization']
         const { semester, sort, limit, offset } = req.query

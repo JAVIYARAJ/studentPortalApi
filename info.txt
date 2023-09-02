@@ -1,0 +1,22 @@
+login flow
+
+login (with student,faculty and admin role)
+register (with student,faculty and admin role)
+forgot password
+
+common functionality
+get profile api (with student,faculty and admin role)
+get subjects api
+get faculty list
+
+
+faculty role functionality
+get students list 
+
+
+
+admin role functionality
+get students list 
+create class
+add subject
+

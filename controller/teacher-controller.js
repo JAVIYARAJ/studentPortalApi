@@ -58,7 +58,9 @@ class TeacherController {
         }
     }
 
+    //admin role required
     static addFacultySubject = async (req, res) => {
+
         const authHeader = req.headers["authorization"]
         const { subjects } = req.body
 
@@ -79,6 +81,7 @@ class TeacherController {
                         var isActiveUser = await executer(`SELECT count(*) as count from user_master where id="${uid}" and role="admin"`)
 
                         const activeCount = isActiveUser[0].count
+
                         var finalSubjects = []
 
                         if (activeCount > 0) {
@@ -96,19 +99,19 @@ class TeacherController {
                                     }
                                 }
 
-                                if(finalSubjects.length>0){
+                                if (finalSubjects.length > 0) {
                                     const insertQuery = `INSERT INTO subject_master(subject_name, subject_code, semester, isOptional) VALUES ?`;
-    
+
                                     const valuesToInsert = finalSubjects.map(subject => [
                                         subject.subject,
                                         subject.code,
                                         subject.semester,
                                         subject.isOptional ? subject.isOptional : 0
                                     ]);
-    
+
                                     const insertResult = await executer(insertQuery, valuesToInsert)
                                     res.status(200).json({ status: "success", message: 'already added subject', code: subjectCodes })
-                                }else{
+                                } else {
                                     res.status(200).json({ status: "success", message: 'subject added successfully.' })
                                 }
 
@@ -129,10 +132,13 @@ class TeacherController {
         } catch (e) {
 
         }
-    }
+    }   
 
-    static createClass = async (req, res) => {
+    //faculty or admin role required
+    static getStudentList = async (req, res) => {
+
         const authHeader = req.headers["authorization"]
+        const { semester, sort, limit, offset } = req.query
 
         if (!authHeader) {
             res.status(401).json({ status: "failed", message: 'Authorization header missing.' })
@@ -144,11 +150,29 @@ class TeacherController {
             if (response) {
                 const uid = response.uid
 
-                var isActiveUser = await executer(`SELECT count(*) as count from user_master where id="${uid}" and role="faculty"`)
+                var isActiveUser = await executer(`SELECT count(*) as count from user_master where id="${uid}" and role in ("faculty","admin")`)
 
-                const activeCount = isActiveUser[0].count
+                var activeCount = isActiveUser[0].count
 
                 if (activeCount > 0) {
+
+                    if (sort && limit && offset) {
+
+                        if (semester != undefined && typeof semester === 'string') {
+                            const result = await executer(`select * from student_master where semester=${semester} order by semester ${sort} limit ${limit} offset ${offset}`)
+
+                            res.status(200).json({ status: "success", message: 'subject get successfully.', data: result })
+                        } else {
+                            //all sem
+                            const result = await executer(`select * from student_master order by semester ${sort} limit ${limit} offset ${offset}`)
+
+                            res.status(200).json({ status: "success", message: 'student list get successfully.', data: result })
+
+                        }
+                    } else {
+                        res.status(400).json({ status: "failed", message: "please provide all query parameters." });
+                    }
+
 
                 } else {
                     res.status(400).json({ status: "failed", message: "permission denied for this user." });
@@ -158,10 +182,101 @@ class TeacherController {
                 res.status(401).json({ status: "failed", message: "UnAuthorization User." });
             }
         }
+
     }
 
-    
+    //open role
+    static getFacultyList = async (req, res) => {
 
+        const authHeader = req.headers["authorization"]
+        const { sort, limit, offset } = req.query
+
+        if (!authHeader) {
+            res.status(401).json({ status: "failed", message: 'Authorization header missing.' })
+        } else {
+            const token = authHeader.split(" ")[2]
+
+            const response = await jwt.verify(token, process.env.JWT_SECRET)
+
+            if (response) {
+                const uid = response.uid
+
+                var isActiveUser = await executer(`SELECT count(*) as count from user_master where id="${uid}"`)
+
+                var activeCount = isActiveUser[0].count
+
+                if (activeCount > 0) {
+
+                    if (sort && limit && offset) {
+
+                        const result = await executer(`select * from faculty_master order by total_experience ${sort} limit ${limit} offset ${offset}`)
+
+                        res.status(200).json({ status: "success", message: 'faculty list get successfully.', data: result })
+
+                    } else {
+                        res.status(400).json({ status: "failed", message: "please provide all query parameters." });
+                    }
+
+
+                } else {
+                    res.status(400).json({ status: "failed", message: "permission denied for this user." });
+
+                }
+            } else {
+                res.status(401).json({ status: "failed", message: "UnAuthorization User." });
+            }
+        }
+
+    }
+
+    //admin role required 
+    static createClass = async (req, res) => {
+        const authHeader = req.headers["authorization"]
+        const { className, facultyId, totalStudents, semester } = req.body
+
+        if (!authHeader) {
+            res.status(401).json({ status: "failed", message: 'Authorization header missing.' })
+        } else {
+            const token = authHeader.split(" ")[2]
+
+            const response = await jwt.verify(token, process.env.JWT_SECRET)
+
+            if (response) {
+                const uid = response.uid
+
+                var isActiveUser = await executer(`SELECT count(*) as count from user_master where id="${uid}" and role="admin"`)
+
+                const activeCount = isActiveUser[0].count
+
+                if (activeCount > 0) {
+                    if (className && facultyId && totalStudents && semester) {
+
+                        var isActiveFaculty = await executer(`SELECT count(*) as count from user_master where id="${facultyId}" and role="faculty"`)
+
+                        const facultyActiveCount=isActiveFaculty[0].count
+
+                        if(facultyActiveCount>0){
+                            const createClassQuery=`insert into class_master (class_name,faculty_id,total_students,semester) values('${className}',${facultyId},${totalStudents},${semester})`
+
+                            const results= await executer(createClassQuery)
+
+                            res.status(200).json({ status: "success", message: "class created successfully." });
+                        }else{
+                            res.status(400).json({ status: "failed", message: "faculty dose not exists." });
+                        }
+
+                    } else {
+                        res.status(400).json({ status: "failed", message: "please provide all query parameters." });
+                    }
+                } else {
+                    res.status(400).json({ status: "failed", message: "permission denied for this user." });
+
+                }
+            } else {
+                res.status(401).json({ status: "failed", message: "UnAuthorization User." });
+            }
+        }
+    }
 }
 
 module.exports = TeacherController
