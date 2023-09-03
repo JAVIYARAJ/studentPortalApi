@@ -6,5 +6,6 @@ routes.post('/login',authController.userLogin)
 routes.post('/register',authController.userRegister)
 routes.post('/forgot',authController.forgotPassword)
 routes.get('/getUserData',authController.getUserData)
+routes.post('/update-profile',authController.updateProfile)
 
 module.exports=routes

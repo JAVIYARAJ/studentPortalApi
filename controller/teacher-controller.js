@@ -132,7 +132,7 @@ class TeacherController {
         } catch (e) {
 
         }
-    }   
+    }
 
     //faculty or admin role required
     static getStudentList = async (req, res) => {
@@ -253,16 +253,171 @@ class TeacherController {
 
                         var isActiveFaculty = await executer(`SELECT count(*) as count from user_master where id="${facultyId}" and role="faculty"`)
 
-                        const facultyActiveCount=isActiveFaculty[0].count
+                        const facultyActiveCount = isActiveFaculty[0].count
 
-                        if(facultyActiveCount>0){
-                            const createClassQuery=`insert into class_master (class_name,faculty_id,total_students,semester) values('${className}',${facultyId},${totalStudents},${semester})`
+                        if (facultyActiveCount > 0) {
+                            const createClassQuery = `insert into class_master (class_name,faculty_id,total_students,semester) values('${className}',${facultyId},${totalStudents},${semester})`
 
-                            const results= await executer(createClassQuery)
+                            const results = await executer(createClassQuery)
 
                             res.status(200).json({ status: "success", message: "class created successfully." });
-                        }else{
+                        } else {
                             res.status(400).json({ status: "failed", message: "faculty dose not exists." });
+                        }
+
+                    } else {
+                        res.status(400).json({ status: "failed", message: "please provide all query parameters." });
+                    }
+                } else {
+                    res.status(400).json({ status: "failed", message: "permission denied for this user." });
+
+                }
+            } else {
+                res.status(401).json({ status: "failed", message: "UnAuthorization User." });
+            }
+        }
+    }
+
+    //get student list(which not joined in any class room)
+
+    static getStudentList = async (req, res) => {
+        const authHeader = req.headers["authorization"]
+        const { semester, classId } = req.query
+
+        if (!authHeader) {
+            res.status(401).json({ status: "failed", message: 'Authorization header missing.' })
+        } else {
+            const token = authHeader.split(" ")[2]
+
+            const response = await jwt.verify(token, process.env.JWT_SECRET)
+
+            if (response) {
+                const uid = response.uid
+
+                var isActiveUser = await executer(`SELECT count(*) as count from user_master where id="${uid}" and role in("faculty","admin")`)
+
+                const activeCount = isActiveUser[0].count
+
+                if (activeCount > 0) {
+                    if (classId && semester) {
+
+                        var alreadyJoinedStudents = await executer(`SELECT student_id FROM student_class_master where class_id=${classId}`)
+
+                        const joinedStudentList=alreadyJoinedStudents.map(student =>student.student_id)
+
+                        var allStudents = await executer(`SELECT id,fname,lname,email,semester,image FROM student_master where semester=${semester} and id not in (${joinedStudentList})`)
+
+                        res.status(200).json({ status: "success", message: "Student list get successfully.", data: allStudents });
+                        
+                    } else {
+                        res.status(400).json({ status: "failed", message: "please provide all query parameters." });
+                    }
+                } else {
+                    res.status(400).json({ status: "failed", message: "permission denied for this user." });
+
+                }
+            } else {
+                res.status(401).json({ status: "failed", message: "UnAuthorization User." });
+            }
+        }
+    }
+
+    static joinClass = async (req, res) => {
+        const authHeader = req.headers["authorization"]
+        const { classId, studentId } = req.body
+
+        if (!authHeader) {
+            res.status(401).json({ status: "failed", message: 'Authorization header missing.' })
+        } else {
+            const token = authHeader.split(" ")[2]
+
+            const response = await jwt.verify(token, process.env.JWT_SECRET)
+
+            if (response) {
+                const uid = response.uid
+
+                var isActiveUser = await executer(`SELECT count(*) as count from user_master where id="${uid}" and role in("faculty","admin")`)
+
+                const activeCount = isActiveUser[0].count
+
+                if (activeCount > 0) {
+                    if (classId && studentId) {
+
+                        var isActiveClass = await executer(`SELECT count(*) as count from class_master where id="${classId}"`)
+
+                        const isActiveClassResult = isActiveClass[0]
+
+                        const activeCount=isActiveClassResult.count
+
+                        if (activeCount> 0) {
+
+                            if (typeof studentId == "number") { 
+
+                                //single student join class
+
+                                const isAlreadyAdded = `select count(*) as count from student_class_master where student_id=${studentId} and class_id=${classId}`
+
+                                const addedCount = isAlreadyAdded[0].count;
+
+                                if (addedCount > 0) {
+                                    res.status(400).json({ status: "failed", message: 'student already joined the class.' })
+
+                                } else {
+
+                                    const joinClassQuery = `insert into student_class_master(class_id,student_id) values(${classId},${studentId})`
+
+                                    const result = await executer(joinClassQuery)
+
+                                    res.status(200).json({ status: "success", message: 'student joined the class successfully.' })
+
+                                }
+
+
+                            } else if (typeof studentId == "object") {
+                                //multiple student join class
+
+                                var alreadyJoinedClass = []
+
+                                var insertStudentData = []
+
+                                const joinClassQuery = `insert into student_class_master(class_id,student_id) 
+                                values ?`
+
+                                for (let i = 0; i < studentId.length; i++) {
+
+                                    const isAlreadyAddedQuery = `select count(*) as count from student_class_master where student_id=${studentId[i]} and class_id=${classId}`
+
+                                    const isAlreadyAdded = await executer(isAlreadyAddedQuery);
+
+                                    const addedCount = isAlreadyAdded[0].count;
+
+                                    if (addedCount > 0) {
+                                        alreadyJoinedClass.push(studentId[i]);
+                                    } else {
+                                        insertStudentData.push(studentId[i]);
+                                    }
+
+                                }
+
+                                const insertStudentValue = insertStudentData.map(id => [
+                                    classId,
+                                    id,
+                                ]);
+
+                                const result = await executer(joinClassQuery, insertStudentValue)
+
+                                if (alreadyJoinedClass.length > 0) {
+                                    res.status(200).json({ status: "success", message: 'student joined the class successfully.', alreadyAddedStudents: alreadyJoinedClass })
+                                } else {
+                                    res.status(200).json({ status: "success", message: 'student joined the class successfully.' })
+                                }
+                            } else {
+                                res.status(400).json({ status: "failed", message: "please provide studentId." });
+
+                            }
+
+                        } else {
+                            res.status(400).json({ status: "failed", message: "class not exists." });
                         }
 
                     } else {

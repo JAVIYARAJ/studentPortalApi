@@ -6,7 +6,7 @@ const queryExecuter = require('../service/helper')
 require('dotenv').config()
 
 class AuthController {
-
+    
     //completed
     static userLogin = async (req, res) => {
         const { email, password } = req.body
@@ -134,7 +134,7 @@ class AuthController {
             res.status(400).json({ status: "failed", message: "please enter all values." })
         }
     }
-    
+
     //working on it
     static forgotPassword = async (req, res) => {
         const { email, oldPassword, newPassword } = req.body
@@ -201,7 +201,7 @@ class AuthController {
                             data: userData ? userData[0] : [],
                             "message": "Data fetch successfully."
                         });
-                    }else{
+                    } else {
                         res.status(400).json({
                             "status": "failed",
                             "message": "permission denied for this user."
@@ -226,6 +226,51 @@ class AuthController {
         return activeCount > 0
     }
 
+    static updateProfile = async (req, res) => {
+
+        const authHeader = req.headers["authorization"]
+        const { email, city, address, phoneNumber } = req.body
+
+        if (!authHeader) {
+            res.status(401).json({ status: "failed", message: 'Authorization header missing.' })
+        } else {
+            const token = authHeader.split(" ")[2]
+
+            const response = await jwt.verify(token, process.env.JWT_SECRET)
+
+            if (response) {
+                const uid = response.uid
+
+                var isActiveUser = await executer(`SELECT count(*) as count,role from user_master where id="${uid}"`)
+
+                const activeUserResult = isActiveUser[0]
+
+                if (activeUserResult.count > 0) {
+
+                    if (email && city && address && phoneNumber) {
+
+                        const role = activeUserResult.role
+
+                        const updateProfileQuery = `update ${role}_master set email='${email}',city='${city}',address='${address}',phonenumber='${phoneNumber}' where id=${uid}`
+
+                        const result = await executer(updateProfileQuery)
+
+                        res.status(200).json({ status: "success", message: "profile updated successfully." });
+
+                    } else {
+                        res.status(400).json({ status: "failed", message: "provide all parameters." });
+                    }
+
+                } else {
+                    res.status(400).json({ status: "failed", message: "user not exists." });
+
+                }
+            } else {
+                res.status(401).json({ status: "failed", message: "UnAuthorization User." });
+            }
+        }
+    }
+    
 }
 
 module.exports = AuthController
